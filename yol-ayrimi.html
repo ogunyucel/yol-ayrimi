@@ -1,0 +1,925 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🛣️ Yol Ayrımı</title>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+        }
+
+        body { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh; 
+            margin: 0; 
+            background: linear-gradient(135deg, #141e30 0%, #243b55 100%); 
+            overflow-y: auto; 
+            overflow-x: hidden; 
+        }
+
+        .container { 
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 20px 25px; 
+            border-radius: 20px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5); 
+            text-align: center; 
+            width: 90%; 
+            max-width: 420px; 
+            position: relative; 
+            display: flex;
+            flex-direction: column;
+            margin: 20px 0;
+            z-index: 10;
+        }
+
+        .wide-container { max-width: 480px; }
+
+        h1 { 
+            color: #333; 
+            margin-bottom: 10px; 
+            font-size: clamp(24px, 7vw, 32px); 
+            white-space: nowrap; 
+        }
+
+        .level-subtitle {
+            color: #34495e; 
+            font-weight: 700; 
+            line-height: 1.4;
+            margin-bottom: 15px; 
+            font-size: clamp(14px, 4.5vw, 17px); 
+            display: block; 
+        }
+
+        .btn-redirect-main, .btn-close {
+            position: absolute; 
+            top: 15px; 
+            right: 15px; 
+            width: 35px; 
+            height: 35px;
+            background-color: #ff4d4d; 
+            color: white; 
+            border: none;
+            text-decoration: none; 
+            border-radius: 50%;
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 20px; 
+            font-weight: bold;
+            transition: 0.3s; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); 
+            z-index: 100;
+            cursor: pointer;
+            padding: 0; 
+            line-height: 1; 
+        }
+        .btn-redirect-main:hover, .btn-close:hover { background-color: #ff0000; transform: scale(1.1); }
+
+        .level-grid { 
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 10px; 
+            margin-top: 10px;
+        }
+        .btn-level { 
+            background-color: #3498db; 
+            color: white; 
+            padding: 15px 0; 
+            font-size: 22px; 
+            border: none; 
+            border-radius: 10px; 
+            cursor: pointer; 
+            transition: 0.3s; 
+            font-weight: bold;
+        }
+        .btn-level:hover { background-color: #2980b9; transform: translateY(-3px); box-shadow: 0 5px 10px rgba(0,0,0,0.15);}
+        
+        .hidden { display: none !important; }
+
+        #score-board { 
+            margin-bottom: 5px; 
+            margin-top: 25px; 
+            background: #f8f9fa; 
+            padding: 10px; 
+            padding-right: 50px; 
+            border-radius: 15px; 
+            display: flex; 
+            flex-direction: column;
+            gap: 5px; 
+            position: relative; 
+            border: 1px solid #ddd;
+            cursor: pointer; 
+            transition: background-color 0.2s ease;
+        }
+        #score-board:hover { background-color: #e9ecef; }
+        #score-board:hover .btn-inspect { color: #3498db; }
+        
+        .main-stats { font-size: 16px; font-weight: bold; color: #2c3e50; }
+        .sub-stats { font-size: 14px; font-weight: bold; display: flex; justify-content: center; gap: 8px; align-items: center;}
+        .stat-correct { color: #27ae60; }
+        .stat-wrong { color: #e74c3c; }
+        .stat-divider { color: #bdc3c7; }
+
+        .btn-inspect {
+            position: absolute; 
+            top: 50%; 
+            right: 10px; 
+            transform: translateY(-50%);
+            display: flex; 
+            flex-direction: column;
+            align-items: center; 
+            font-size: 12px; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            transition: 0.2s; 
+        }
+        .btn-inspect span { font-size: 20px; margin-bottom: 2px; }
+
+        .game-wrapper {
+            position: relative;
+            width: 100%;
+            margin: 0 0 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px 0;
+            min-height: 250px; 
+        }
+
+        .game-area {
+            position: relative;
+            width: 100%;
+            background: transparent; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 15px;
+        }
+
+        /* --- YOL TASARIMI --- */
+        .road-scene {
+            position: relative;
+            width: 100%;
+            height: 240px;
+            background: #e0c097; 
+            border-radius: 15px;
+            border: 4px solid #c49a6c;
+            overflow: hidden;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.1);
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .path {
+            position: absolute;
+            width: 50%;
+            height: 80px;
+            z-index: 5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        
+        .path-top {
+            left: 45%;
+            top: 15px;
+        }
+        
+        .path-bottom {
+            left: 45%;
+            top: 145px;
+        }
+
+        .path:hover .path-text { 
+            transform: scale(1.1); 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border-color: #3498db;
+        }
+
+        .path-text {
+            background: white;
+            padding: 6px 16px;
+            border-radius: 10px;
+            font-weight: 900;
+            font-size: 20px;
+            color: #2c3e50;
+            border: 3px solid #ecf0f1;
+            z-index: 2;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        .mine {
+            position: absolute;
+            left: 20px; 
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 40px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .explosion {
+            position: absolute;
+            left: 40px;
+            top: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 70px;
+            opacity: 0;
+            z-index: 20;
+        }
+
+        /* --- DOĞRU CEVAP EKRAN ANİMASYONU --- */
+        .equation-popup {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            font-size: 32px;
+            font-weight: 900;
+            color: #27ae60;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 10px 25px;
+            border-radius: 15px;
+            border: 4px solid #27ae60;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.25);
+            z-index: 100;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        @keyframes popEquation {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+            15% { transform: translate(-50%, -50%) scale(1.1); opacity: 1; }
+            30% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            70% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+            100% { transform: translate(-50%, -80%) scale(0.8); opacity: 0; }
+        }
+
+        /* --- CSS İLE ÖZEL ŞİMŞEK MCQUEEN TASARIMI --- */
+        .car {
+            position: absolute;
+            left: 0px;
+            top: 120px;
+            transform: translateY(-50%);
+            z-index: 10;
+        }
+
+        .mcqueen-wrapper {
+            position: relative;
+            width: 100px;
+            height: 45px;
+            transform: scale(0.7); 
+            transform-origin: left center;
+        }
+
+        .mcqueen-body {
+            position: absolute;
+            bottom: 5px;
+            width: 100px;
+            height: 30px;
+            background: #e74c3c;
+            border-radius: 20px 40px 10px 10px;
+            box-shadow: inset -2px -5px 10px rgba(0,0,0,0.3);
+            z-index: 2;
+        }
+
+        .mcqueen-roof {
+            position: absolute;
+            bottom: 30px;
+            left: 25px;
+            width: 45px;
+            height: 20px;
+            background: #e74c3c;
+            border-radius: 20px 20px 0 0;
+            z-index: 1;
+        }
+
+        .mcqueen-window {
+            position: absolute;
+            top: 3px;
+            left: 5px;
+            width: 35px;
+            height: 18px;
+            background: #ecf0f1;
+            border-radius: 15px 15px 0 0;
+            border: 2px solid #c0392b;
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            padding-right: 5px;
+            gap: 2px;
+        }
+
+        .mcqueen-eye {
+            width: 5px;
+            height: 8px;
+            background: #2980b9;
+            border-radius: 50%;
+        }
+
+        .mcqueen-bolt {
+            position: absolute;
+            top: 13px;
+            left: 15px;
+            width: 60px;
+            height: 15px;
+            background: #f1c40f;
+            clip-path: polygon(0 50%, 45% 0, 35% 50%, 100% 50%, 55% 100%, 65% 65%, 0 65%);
+            z-index: 3;
+        }
+
+        .mcqueen-number {
+            position: absolute;
+            top: -38px;
+            left: 45px;
+            transform: translateX(-50%);
+            font-size: 24px;
+            font-weight: 900;
+            color: #e74c3c;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 2px 10px;
+            border-radius: 8px;
+            border: 3px solid #e74c3c;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            z-index: 20;
+        }
+
+        .mcqueen-number::after {
+            content: '';
+            position: absolute;
+            bottom: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0; 
+            height: 0; 
+            border-left: 6px solid transparent;
+            border-right: 6px solid transparent;
+            border-top: 6px solid #e74c3c;
+        }
+
+        .mcqueen-wheel {
+            position: absolute;
+            bottom: 0px;
+            width: 22px;
+            height: 22px;
+            background: #2c3e50;
+            border-radius: 50%;
+            border: 3px solid #e74c3c;
+            z-index: 5;
+        }
+
+        .wheel-front { right: 12px; }
+        .wheel-back { left: 12px; }
+
+        .mcqueen-spoiler {
+            position: absolute;
+            left: -5px;
+            bottom: 20px;
+            width: 12px;
+            height: 20px;
+            background: #c0392b;
+            border-radius: 5px;
+            transform: rotate(-20deg);
+            z-index: 1;
+        }
+
+        /* Çizgisel Kavisli Rota Animasyonları */
+        @keyframes drive-top-correct {
+            0% { left: -10px; top: 120px; transform: translateY(-50%) rotate(0deg); }
+            20% { left: 15%; top: 110px; transform: translateY(-50%) rotate(-15deg); }
+            45% { left: 45%; top: 60px; transform: translateY(-50%) rotate(-5deg); }
+            60% { left: 60%; top: 55px; transform: translateY(-50%) rotate(0deg); }
+            100% { left: 110%; top: 55px; transform: translateY(-50%) rotate(0deg); }
+        }
+        @keyframes drive-bottom-correct {
+            0% { left: -10px; top: 120px; transform: translateY(-50%) rotate(0deg); }
+            20% { left: 15%; top: 130px; transform: translateY(-50%) rotate(15deg); }
+            45% { left: 45%; top: 180px; transform: translateY(-50%) rotate(5deg); }
+            60% { left: 60%; top: 185px; transform: translateY(-50%) rotate(0deg); }
+            100% { left: 110%; top: 185px; transform: translateY(-50%) rotate(0deg); }
+        }
+        @keyframes drive-top-wrong {
+            0% { left: -10px; top: 120px; transform: translateY(-50%) rotate(0deg); }
+            35% { left: 15%; top: 110px; transform: translateY(-50%) rotate(-15deg); }
+            100% { left: 42%; top: 65px; transform: translateY(-50%) rotate(-5deg); }
+        }
+        @keyframes drive-bottom-wrong {
+            0% { left: -10px; top: 120px; transform: translateY(-50%) rotate(0deg); }
+            35% { left: 15%; top: 130px; transform: translateY(-50%) rotate(15deg); }
+            100% { left: 42%; top: 175px; transform: translateY(-50%) rotate(5deg); }
+        }
+        @keyframes explode {
+            0% { transform: translate(-50%, -50%) scale(0.5); opacity: 1; }
+            50% { transform: translate(-50%, -50%) scale(1.5); opacity: 1; }
+            100% { transform: translate(-50%, -50%) scale(2.2); opacity: 0; }
+        }
+        /* ----------------------------------------------- */
+
+        #message { 
+            min-height: 30px; 
+            font-weight: bold; 
+            margin-top: 10px; 
+            margin-bottom: 5px; 
+            font-size: 16px; 
+            transition: 0.3s; 
+            color: #555; 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .table-list { display: flex; justify-content: space-between; gap: 15px; margin-top: 15px; padding: 15px; background: #f8f9fa; border-radius: 15px; border: 2px solid #ecf0f1; cursor: pointer; transition: 0.2s ease; }
+        .table-list:hover { background-color: #e9ecef; }
+        .table-column { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+        .table-row { font-size: 17px; font-weight: bold; padding-bottom: 5px; border-bottom: 1px dashed #ddd; text-align: left; white-space: nowrap; }
+        .row-correct { color: #27ae60; }
+        .row-wrong { color: #e74c3c; }
+        .row-unanswered { color: #7f8c8d; }
+
+        .btn-mistakes { background-color: #e67e22; color: white; padding: 15px; font-size: 20px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; transition: 0.3s; }
+        .btn-mistakes:hover { background-color: #d35400; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(230, 126, 34, 0.4); }
+
+        .matematik-butonu { display: flex; justify-content: center; background-color: #2ecc71; color: white; text-decoration: none; padding: 12px 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); transition: background-color 0.3s ease, transform 0.2s ease; border: none; cursor: pointer; margin-top: 5px; width: 100%; }
+        .matematik-butonu:hover { background-color: #27ae60; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(46, 204, 113, 0.3); }
+        .matematik-butonu:active { transform: translateY(1px); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
+        
+        .buton-icerik { display: flex; align-items: center; justify-content: center; gap: 12px; }
+        .takvim-ikon { width: 32px; height: 32px; flex-shrink: 0; }
+        .metin-grubu { display: flex; flex-direction: column; text-align: left; }
+        .kampanya-metni { font-size: 13px; font-weight: 600; line-height: 1.2; margin-bottom: 2px; }
+        .alt-metin { font-size: 14px; font-weight: 800; }
+
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 1; transition: opacity 0.3s ease; }
+        .modal-overlay.hidden { display: none !important; opacity: 0; }
+        
+        /* GÜNCELLENMİŞ MODAL STİLLERİ */
+        .modal-box { background: white; padding: 25px 20px; border-radius: 20px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); animation: popInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
+        @keyframes popInModal { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+        .modal-buttons { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
+        .btn-modal-end, .btn-modal-continue { flex: 1; padding: 15px 5px; font-size: 16px; font-weight: 900; border-radius: 12px; cursor: pointer; transition: all 0.2s ease; background: transparent; min-width: 130px; text-transform: uppercase; letter-spacing: 0.5px; line-height: 1.3; }
+        .btn-modal-end { color: #e74c3c; border: 3px solid #e74c3c; }
+        .btn-modal-end:hover { background: #e74c3c; color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(231, 76, 60, 0.3); }
+        .btn-modal-continue { color: #2ecc71; border: 3px solid #2ecc71; }
+        .btn-modal-continue:hover { background: #2ecc71; color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
+        
+        /* YENİ SARI BUTON STİLLERİ */
+        .btn-modal-all-games { display: block; width: 100%; margin-top: 15px; padding: 15px; font-size: 20px; font-weight: 900; color: #333; background-color: #f1c40f; border: 3px solid #f39c12; border-radius: 12px; cursor: pointer; text-decoration: none; text-transform: uppercase; line-height: 1.3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s ease; }
+        .btn-modal-all-games:hover { background-color: #f39c12; color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4); }
+
+        .success-modal-box { background-color: #fcfcf0; padding: 60px 20px 40px 20px; }
+        .success-text { font-size: 32px; font-weight: 900; color: #000; margin: 0; line-height: 1.3; }
+
+        .custom-no-mistake-box { background-color: #f2fbf4; border: 4px solid #32d777; border-radius: 20px; padding: 45px 20px 30px; }
+        .btn-close-modal { position: absolute; top: 15px; right: 15px; width: 32px; height: 32px; background-color: #ff5252; color: white; border: none; border-radius: 50%; font-size: 18px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; line-height: 1; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: 0.2s; }
+        .btn-close-modal:hover { transform: scale(1.1); background-color: #ff3333; }
+        .star-icon { font-size: 55px; margin-bottom: 15px; animation: float 2s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .no-mistake-title { color: #32d777; font-size: 28px; font-weight: 900; margin: 0 0 15px 0; }
+        .no-mistake-text { color: #34495e; font-size: 15px; font-weight: 600; margin: 0 0 25px 0; line-height: 1.4; }
+        .btn-tamam { background-color: #32d777; color: white; border: none; border-radius: 10px; padding: 12px 40px; font-size: 18px; font-weight: bold; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(50, 215, 119, 0.3); }
+        .btn-tamam:hover { background-color: #28b864; transform: translateY(-2px); }
+    </style>
+</head>
+<body>
+
+<div id="level-screen" class="container wide-container">
+    <a href="https://matfabe.com/oyunlar/#carpan-crush" class="btn-redirect-main">×</a>
+    <h1>🛣️ Yol Ayrımı</h1>
+    <p class="level-subtitle">Kaçların Çarpımını Öğrenmek İstersin?<br>Seç ve Başla!</p>
+    <div class="level-grid" id="levels"></div>
+
+    <a href="https://tavsiye.matfabe.com/r/oyun/" target="_blank" class="matematik-butonu">
+        <div class="buton-icerik">
+            <svg class="takvim-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+                <path d="M16 2V6M8 2V6M3 10H21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9 16L11 18L15 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="metin-grubu">
+                <span class="kampanya-metni">Temel Matematik seviyeni<br>ÜCRETSİZ öğrenmek ister misin?</span>
+                <span class="alt-metin">HEMEN TIKLA</span>
+            </div>
+        </div>
+    </a>
+</div>
+
+<div id="game-screen" class="container hidden">
+    <button class="btn-close" onclick="endGame()">×</button>
+    
+    <div id="score-board" onclick="openInspectScreen()">
+        <div class="main-stats">Skor: <span id="score">0</span> | Seviye: <span id="level-display">6</span><span id="level-suffix">'lar</span></div>
+        <div class="sub-stats">
+            <span class="stat-correct">✔ Doğru: <span id="correct-count">0</span></span>
+            <span class="stat-divider">|</span>
+            <span class="stat-wrong">✖ Yanlış: <span id="wrong-count">0</span></span>
+        </div>
+        <div class="btn-inspect"><span>🔍</span> İncele</div>
+    </div>
+
+    <p id="message">Doğru yolu seç ve hedefe ulaş!</p>
+
+    <div class="game-wrapper">
+        <div id="game-area" class="game-area">
+            <!-- Oyun içeriği JS ile doldurulacak -->
+        </div>
+    </div>
+
+    <a href="https://tavsiye.matfabe.com/r/oyun/" target="_blank" class="matematik-butonu">
+        <div class="buton-icerik">
+            <svg class="takvim-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+                <path d="M16 2V6M8 2V6M3 10H21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9 16L11 18L15 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="metin-grubu">
+               <span class="kampanya-metni">Temel Matematik seviyeni<br>ÜCRETSİZ öğrenmek ister misin?</span>
+                <span class="alt-metin">HEMEN TIKLA</span>
+            </div>
+        </div>
+    </a>
+</div>
+
+<div id="inspect-screen" class="container hidden">
+    <button class="btn-close" onclick="closeInspectScreen()">×</button>
+    <div id="score-board" style="padding-right: 15px; cursor: default;">
+        <div class="main-stats">Skor: <span id="insp-score">0</span></div>
+        <div class="sub-stats">
+            <span class="stat-correct">✔ Doğru: <span id="insp-correct">0</span></span>
+            <span class="stat-divider">|</span>
+            <span class="stat-wrong">✖ Yanlış: <span id="insp-wrong">0</span></span>
+        </div>
+    </div>
+    <h2 style="color: #2c3e50; margin: 10px 0;"><span id="insp-level-title">6</span><span id="insp-level-suffix">'lar</span> Çarpım Tablosu</h2>
+    <div id="table-list" class="table-list" onclick="startMistakeMode()"></div>
+    <button class="btn-mistakes" onclick="startMistakeMode()">Sadece Yanlışlara Çalış</button>
+
+    <a href="https://tavsiye.matfabe.com/r/oyun/" target="_blank" class="matematik-butonu">
+        <div class="buton-icerik">
+            <svg class="takvim-ikon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <rect x="3" y="4" width="18" height="18" rx="2" stroke="white" stroke-width="2"/>
+                <path d="M16 2V6M8 2V6M3 10H21" stroke="white" stroke-width="2" stroke-linecap="round"/>
+                <path d="M9 16L11 18L15 14" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <div class="metin-grubu">
+                <span class="kampanya-metni">Temel Matematik seviyeni<br>ÜCRETSİZ öğrenmek ister misin?</span>
+                <span class="alt-metin">HEMEN TIKLA</span>
+            </div>
+        </div>
+    </a>
+</div>
+
+<div id="custom-confirm-modal" class="modal-overlay hidden">
+    <div class="modal-box">
+        <div class="modal-buttons">
+            <button class="btn-modal-end" onclick="confirmEndGame()">Bu oyunu<br>BİTİR</button>
+            <button class="btn-modal-continue" onclick="cancelEndGame()">Bu Oyuna<br>DEVAM ET</button>
+        </div>
+        <a href="https://matfabe.com/oyunlar" class="btn-modal-all-games">Tüm Oyunları<br>Göster</a>
+    </div>
+</div>
+
+<div id="success-modal" class="modal-overlay hidden">
+    <div class="modal-box success-modal-box">
+        <button class="btn-close" onclick="closeSuccessModal()">×</button>
+        <h2 class="success-text">Tüm Yanlışlarını<br>Düzelttin.<br><br>TEBRİKLER 👍</h2>
+    </div>
+</div>
+
+<div id="no-mistake-modal" class="modal-overlay hidden">
+    <div class="modal-box custom-no-mistake-box">
+        <button class="btn-close-modal" onclick="closeNoMistakeModal()">×</button>
+        <div class="star-icon">🌟</div>
+        <h2 class="no-mistake-title">Harika!</h2>
+        <p class="no-mistake-text">Çalışılacak hiçbir yanlış işleminiz yok.<br>Bütün cevaplarınız doğru!</p>
+        <button class="btn-tamam" onclick="closeNoMistakeModal()">Tamam</button>
+    </div>
+</div>
+
+<script>
+    let currentLevel = 1; 
+    let score = 0;
+    let correctCount = 0; 
+    let wrongCount = 0;   
+    let historyData = {}; 
+
+    let isMistakeMode = false;
+    let mistakeQueue = [];
+
+    const gameArea = document.getElementById('game-area');
+
+    function showScreen(screenId) {
+        document.getElementById('level-screen').classList.add('hidden');
+        document.getElementById('game-screen').classList.add('hidden');
+        document.getElementById('inspect-screen').classList.add('hidden');
+        document.getElementById(screenId).classList.remove('hidden');
+    }
+
+    function generateLevelButtons() {
+        const levelsDiv = document.getElementById('levels');
+        levelsDiv.innerHTML = ""; 
+        for (let i = 1; i <= 9; i++) {
+            let btn = document.createElement('button');
+            let suffix = [1, 2, 3, 4, 5, 7, 8].includes(i) ? "'ler" : "'lar";
+            btn.innerText = i + suffix;
+            btn.className = "btn-level";
+            btn.onclick = () => startLevel(i);
+            levelsDiv.appendChild(btn);
+        }
+    }
+    window.onload = generateLevelButtons;
+
+    function startLevel(level) {
+        currentLevel = level;
+        document.getElementById('level-display').innerText = level;
+        
+        let suffix = [1, 2, 3, 4, 5, 7, 8].includes(level) ? "'ler" : "'lar";
+        document.getElementById('level-suffix').innerText = suffix;
+        document.getElementById('insp-level-title').innerText = level;
+        document.getElementById('insp-level-suffix').innerText = suffix;
+
+        score = 0;
+        correctCount = 0; 
+        wrongCount = 0;   
+        historyData = {};
+        isMistakeMode = false;
+        mistakeQueue = [];
+
+        updateScore();
+        showScreen('game-screen');
+        initBoard();
+    }
+
+    function initBoard() {
+        gameArea.innerHTML = '';
+        document.getElementById("message").innerText = "Doğru yolu seç ve hedefe ulaş!";
+        document.getElementById("message").style.color = "#555";
+        
+        addNewGroup(); 
+    }
+
+    function addNewGroup() {
+        let multiplier = 1;
+        if (isMistakeMode) {
+            if (mistakeQueue.length === 0) return;
+            multiplier = mistakeQueue[Math.floor(Math.random() * mistakeQueue.length)];
+        } else {
+            multiplier = Math.floor(Math.random() * 10) + 1;
+        }
+        
+        createRoadScene(multiplier);
+    }
+
+    function createRoadScene(multiplier) {
+        gameArea.innerHTML = ''; 
+
+        let correctAns = currentLevel * multiplier;
+        
+        let wrongMultiplier;
+        do {
+            wrongMultiplier = Math.floor(Math.random() * 10) + 1;
+        } while (wrongMultiplier === multiplier);
+
+        let isTopCorrect = Math.random() > 0.5;
+
+        let topText = isTopCorrect ? `${currentLevel} x ${multiplier}` : `${currentLevel} x ${wrongMultiplier}`;
+        let bottomText = isTopCorrect ? `${currentLevel} x ${wrongMultiplier}` : `${currentLevel} x ${multiplier}`;
+
+        const scene = document.createElement('div');
+        scene.className = 'road-scene';
+        
+        scene.innerHTML = `
+            <svg viewBox="0 0 400 240" preserveAspectRatio="none" style="position:absolute; width:100%; height:100%; left:0; top:0; z-index:1;">
+                <path d="M -20,120 C 120,120 150,45 420,45" fill="none" stroke="#2c3e50" stroke-width="84" />
+                <path d="M -20,120 C 120,120 150,195 420,195" fill="none" stroke="#2c3e50" stroke-width="84" />
+                
+                <path d="M -20,120 C 120,120 150,45 420,45" fill="none" stroke="#6c7a89" stroke-width="70" />
+                <path d="M -20,120 C 120,120 150,195 420,195" fill="none" stroke="#6c7a89" stroke-width="70" />
+                
+                <path d="M -20,120 C 120,120 150,45 420,45" fill="none" stroke="white" stroke-width="4" stroke-dasharray="15,10" />
+                <path d="M -20,120 C 120,120 150,195 420,195" fill="none" stroke="white" stroke-width="4" stroke-dasharray="15,10" />
+            </svg>
+
+            <div class="path path-top" onclick="choosePath(this, 'top', ${isTopCorrect}, ${multiplier})">
+                <span class="path-text">${topText}</span>
+                <div class="mine">💣</div>
+                <div class="explosion">💥</div>
+            </div>
+            <div class="path path-bottom" onclick="choosePath(this, 'bottom', ${!isTopCorrect}, ${multiplier})">
+                <span class="path-text">${bottomText}</span>
+                <div class="mine">💣</div>
+                <div class="explosion">💥</div>
+            </div>
+            
+            <div class="car" id="player-car">
+                <div class="mcqueen-wrapper">
+                    <div class="mcqueen-spoiler"></div>
+                    <div class="mcqueen-roof">
+                        <div class="mcqueen-window">
+                            <div class="mcqueen-eye"></div>
+                            <div class="mcqueen-eye"></div>
+                        </div>
+                    </div>
+                    <div class="mcqueen-bolt"></div>
+                    <div class="mcqueen-number">${correctAns}</div>
+                    <div class="mcqueen-body"></div>
+                    <div class="mcqueen-wheel wheel-front"></div>
+                    <div class="mcqueen-wheel wheel-back"></div>
+                </div>
+            </div>
+        `;
+        gameArea.appendChild(scene);
+    }
+
+    function choosePath(element, pathName, isCorrect, multiplier) {
+        const scene = document.querySelector('.road-scene');
+        if (scene.classList.contains('locked')) return;
+        scene.classList.add('locked');
+
+        const car = document.getElementById('player-car');
+        const mine = element.querySelector('.mine');
+        const explosion = element.querySelector('.explosion');
+        let correctAns = currentLevel * multiplier;
+
+        if (isCorrect) {
+            car.style.animation = `drive-${pathName}-correct 3s forwards ease-in-out`;
+            
+            setTimeout(() => {
+                const eqPopup = document.createElement('div');
+                eqPopup.className = 'equation-popup';
+                eqPopup.innerText = `${correctAns} = ${currentLevel} x ${multiplier}`;
+                eqPopup.style.animation = 'popEquation 1.5s forwards';
+                scene.appendChild(eqPopup);
+            }, 1000); 
+
+            score += 10;
+            if (isMistakeMode) {
+                if (wrongCount > 0) wrongCount--;
+                historyData[multiplier] = 'correct';
+                mistakeQueue = mistakeQueue.filter(m => m !== multiplier);
+            } else {
+                correctCount++;
+                if (historyData[multiplier] !== 'wrong') historyData[multiplier] = 'correct';
+            }
+            updateScore();
+            
+            document.getElementById("message").innerText = "Harika! Hedefe ulaştın 🏁";
+            document.getElementById("message").style.color = "#27ae60";
+
+            setTimeout(() => {
+                if (isMistakeMode && mistakeQueue.length === 0) {
+                    document.getElementById('success-modal').classList.remove('hidden');
+                } else {
+                    addNewGroup(); 
+                }
+            }, 3200); 
+
+        } else {
+            mine.style.opacity = '1';
+            car.style.animation = `drive-${pathName}-wrong 2s forwards ease-in-out`;
+            
+            score -= 5;
+            wrongCount++;
+            historyData[multiplier] = 'wrong';
+            updateScore();
+            
+            document.getElementById("message").innerText = "Eyvah! Mayına çarptın 💥";
+            document.getElementById("message").style.color = "#c0392b";
+            
+            setTimeout(() => {
+                car.style.opacity = '0'; 
+                explosion.style.animation = 'explode 0.8s forwards';
+            }, 2000); 
+
+            setTimeout(() => {
+                addNewGroup(); 
+            }, 3200); 
+        }
+    }
+
+    function updateScore() {
+        document.getElementById('score').innerText = score;
+        document.getElementById('correct-count').innerText = correctCount;
+        document.getElementById('wrong-count').innerText = wrongCount;
+    }
+
+    function closeSuccessModal() {
+        document.getElementById('success-modal').classList.add('hidden');
+        openInspectScreen();
+    }
+
+    function endGame() {
+        if (isMistakeMode) {
+            isMistakeMode = false;
+            openInspectScreen(); 
+        } else {
+            document.getElementById('custom-confirm-modal').classList.remove('hidden');
+        }
+    }
+
+    function confirmEndGame() {
+        document.getElementById('custom-confirm-modal').classList.add('hidden');
+        showScreen('level-screen');
+    }
+
+    function cancelEndGame() {
+        document.getElementById('custom-confirm-modal').classList.add('hidden');
+    }
+
+    function openInspectScreen() {
+        showScreen('inspect-screen');
+        
+        document.getElementById('insp-score').innerText = score;
+        document.getElementById('insp-correct').innerText = correctCount;
+        document.getElementById('insp-wrong').innerText = wrongCount;
+        document.getElementById('insp-level-title').innerText = currentLevel;
+        
+        let suffix = [1, 2, 3, 4, 5, 7, 8].includes(currentLevel) ? "'ler" : "'lar";
+        document.getElementById('insp-level-suffix').innerText = suffix;
+
+        const listDiv = document.getElementById('table-list');
+        listDiv.innerHTML = "";
+
+        let col1 = document.createElement('div');
+        col1.className = "table-column";
+        let col2 = document.createElement('div');
+        col2.className = "table-column";
+
+        for(let i = 1; i <= 10; i++) {
+            let div = document.createElement('div');
+            div.className = "table-row";
+            
+            let statusHTML = "";
+            let rowClass = "row-unanswered";
+
+            if (historyData[i] === 'correct') {
+                statusHTML = "✔ ";
+                rowClass = "row-correct";
+            } else if (historyData[i] === 'wrong') {
+                statusHTML = "✖ ";
+                rowClass = "row-wrong";
+            } else {
+                statusHTML = "<span style='opacity:0;'>✔ </span>"; 
+            }
+
+            div.innerHTML = `<span class="${rowClass}">${statusHTML} ${currentLevel} x ${i} = ${currentLevel * i}</span>`;
+            
+            if (i <= 5) {
+                col1.appendChild(div);
+            } else {
+                col2.appendChild(div);
+            }
+        }
+        
+        listDiv.appendChild(col1);
+        listDiv.appendChild(col2);
+    }
+
+    function closeInspectScreen() {
+        if (isMistakeMode && mistakeQueue.length === 0) {
+            isMistakeMode = false;
+        }
+        
+        showScreen('game-screen');
+        
+        const scene = document.querySelector('.road-scene');
+        if (!scene || scene.classList.contains('locked')) {
+            initBoard();
+        }
+    }
+
+    function closeNoMistakeModal() {
+        document.getElementById('no-mistake-modal').classList.add('hidden');
+    }
+
+    function startMistakeMode() {
+        mistakeQueue = [];
+        for (let i = 1; i <= 10; i++) {
+            if (historyData[i] === 'wrong') {
+                mistakeQueue.push(i);
+            }
+        }
+
+        if (mistakeQueue.length === 0) {
+            document.getElementById('no-mistake-modal').classList.remove('hidden');
+            return;
+        }
+
+        isMistakeMode = true;
+        showScreen('game-screen');
+        initBoard(); 
+    }
+</script>
+</body>
+</html>
