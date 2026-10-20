@@ -274,6 +274,12 @@
             top: 120px;
             transform: translateY(-50%);
             z-index: 10;
+            cursor: grab; /* Sürükleme imleci */
+            touch-action: none; /* Mobilde sayfayı kaydırmayı engeller */
+        }
+        
+        .car:active {
+            cursor: grabbing;
         }
 
         .mcqueen-wrapper {
@@ -340,18 +346,19 @@
             z-index: 3;
         }
 
+        /* Sayıyı iki katına çıkarttık (48px) ve daha yukarı aldık */
         .mcqueen-number {
             position: absolute;
-            top: -38px;
+            top: -75px;
             left: 45px;
             transform: translateX(-50%);
-            font-size: 24px;
+            font-size: 48px;
             font-weight: 900;
             color: #e74c3c;
             background: rgba(255, 255, 255, 0.95);
-            padding: 2px 10px;
-            border-radius: 8px;
-            border: 3px solid #e74c3c;
+            padding: 2px 15px;
+            border-radius: 12px;
+            border: 4px solid #e74c3c;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             z-index: 20;
         }
@@ -359,14 +366,14 @@
         .mcqueen-number::after {
             content: '';
             position: absolute;
-            bottom: -6px;
+            bottom: -8px;
             left: 50%;
             transform: translateX(-50%);
             width: 0; 
             height: 0; 
-            border-left: 6px solid transparent;
-            border-right: 6px solid transparent;
-            border-top: 6px solid #e74c3c;
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 8px solid #e74c3c;
         }
 
         .mcqueen-wheel {
@@ -464,7 +471,7 @@
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(3px); display: flex; justify-content: center; align-items: center; z-index: 1000; opacity: 1; transition: opacity 0.3s ease; }
         .modal-overlay.hidden { display: none !important; opacity: 0; }
         
-        /* GÜNCELLENMİŞ MODAL STİLLERİ */
+        /* MODAL STİLLERİ */
         .modal-box { background: white; padding: 25px 20px; border-radius: 20px; text-align: center; width: 90%; max-width: 380px; box-shadow: 0 15px 40px rgba(0,0,0,0.4); animation: popInModal 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; }
         @keyframes popInModal { 0% { transform: scale(0.8); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
         .modal-buttons { display: flex; justify-content: space-between; gap: 15px; flex-wrap: wrap; }
@@ -474,7 +481,6 @@
         .btn-modal-continue { color: #2ecc71; border: 3px solid #2ecc71; }
         .btn-modal-continue:hover { background: #2ecc71; color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(46, 204, 113, 0.3); }
         
-        /* YENİ SARI BUTON STİLLERİ */
         .btn-modal-all-games { display: block; width: 100%; margin-top: 15px; padding: 15px; font-size: 20px; font-weight: 900; color: #333; background-color: #f1c40f; border: 3px solid #f39c12; border-radius: 12px; cursor: pointer; text-decoration: none; text-transform: uppercase; line-height: 1.3; box-shadow: 0 4px 6px rgba(0,0,0,0.1); transition: all 0.2s ease; }
         .btn-modal-all-games:hover { background-color: #f39c12; color: white; transform: translateY(-3px); box-shadow: 0 5px 15px rgba(243, 156, 18, 0.4); }
 
@@ -528,7 +534,8 @@
         <div class="btn-inspect"><span>🔍</span> İncele</div>
     </div>
 
-    <p id="message">Doğru yolu seç ve hedefe ulaş!</p>
+    <!-- Varsayılan mesaj güncellendi -->
+    <p id="message">Doğru yolu seç</p>
 
     <div class="game-wrapper">
         <div id="game-area" class="game-area">
@@ -663,7 +670,7 @@
 
     function initBoard() {
         gameArea.innerHTML = '';
-        document.getElementById("message").innerText = "Doğru yolu seç ve hedefe ulaş!";
+        document.getElementById("message").innerText = "Doğru yolu seç"; // Güncellendi
         document.getElementById("message").style.color = "#555";
         
         addNewGroup(); 
@@ -774,7 +781,8 @@
             }
             updateScore();
             
-            document.getElementById("message").innerText = "Harika! Hedefe ulaştın 🏁";
+            // Başarı mesajı güncellendi
+            document.getElementById("message").innerText = "Doğru yolu seçtin 🏁";
             document.getElementById("message").style.color = "#27ae60";
 
             setTimeout(() => {
@@ -920,6 +928,72 @@
         showScreen('game-screen');
         initBoard(); 
     }
+
+    /* --- SÜRÜKLE BIRAK (DRAG & DROP) MANTIĞI --- */
+    let dragCar = null;
+    let dragStartX = 0;
+    let dragStartY = 0;
+    let isDragging = false;
+
+    function handleDragStart(e) {
+        let targetCar = e.target.closest('#player-car');
+        if (targetCar) {
+            const scene = document.querySelector('.road-scene');
+            if (scene && scene.classList.contains('locked')) return;
+            
+            dragCar = targetCar;
+            isDragging = true;
+            dragStartX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+            dragStartY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            dragCar.style.transition = 'none';
+        }
+    }
+
+    function handleDragMove(e) {
+        if (!isDragging || !dragCar) return;
+        e.preventDefault(); 
+        let currentX = e.type.includes('mouse') ? e.clientX : e.touches[0].clientX;
+        let currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+        let dx = currentX - dragStartX;
+        let dy = currentY - dragStartY;
+        
+        if (dx < -20) dx = -20; 
+        
+        dragCar.style.transform = `translate(${dx}px, calc(-50% + ${dy}px)) scale(1.05)`;
+    }
+
+    function handleDragEnd(e) {
+        if (!isDragging || !dragCar) return;
+        isDragging = false;
+        
+        let currentX = e.type.includes('mouse') ? e.clientX : (e.changedTouches ? e.changedTouches[0].clientX : dragStartX);
+        let currentY = e.type.includes('mouse') ? e.clientY : (e.changedTouches ? e.changedTouches[0].clientY : dragStartY);
+        
+        let dx = currentX - dragStartX;
+        let dy = currentY - dragStartY;
+
+        dragCar.style.transition = 'transform 0.3s ease';
+        dragCar.style.transform = `translateY(-50%)`; 
+        
+        // Yukarı veya aşağı yeterli sürükleme yapıldıysa
+        if (dx > 30 || Math.abs(dy) > 30) {
+            if (dy < -10 || (dx > 30 && dy <= 0)) {
+                document.querySelector('.path-top').click();
+            } else {
+                document.querySelector('.path-bottom').click();
+            }
+        }
+        dragCar = null;
+    }
+
+    document.addEventListener('mousedown', handleDragStart);
+    document.addEventListener('mousemove', handleDragMove, {passive: false});
+    document.addEventListener('mouseup', handleDragEnd);
+
+    document.addEventListener('touchstart', handleDragStart, {passive: false});
+    document.addEventListener('touchmove', handleDragMove, {passive: false});
+    document.addEventListener('touchend', handleDragEnd);
 </script>
 </body>
 </html>
+``` <FollowUp>
