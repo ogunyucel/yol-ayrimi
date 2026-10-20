@@ -274,8 +274,8 @@
             top: 120px;
             transform: translateY(-50%);
             z-index: 10;
-            cursor: grab; /* Sürükleme imleci */
-            touch-action: none; /* Mobilde sayfayı kaydırmayı engeller */
+            cursor: grab; 
+            touch-action: none; 
         }
         
         .car:active {
@@ -346,7 +346,6 @@
             z-index: 3;
         }
 
-        /* Sayıyı iki katına çıkarttık (48px) ve daha yukarı aldık */
         .mcqueen-number {
             position: absolute;
             top: -75px;
@@ -534,7 +533,6 @@
         <div class="btn-inspect"><span>🔍</span> İncele</div>
     </div>
 
-    <!-- Varsayılan mesaj güncellendi -->
     <p id="message">Doğru yolu seç</p>
 
     <div class="game-wrapper">
@@ -670,13 +668,14 @@
 
     function initBoard() {
         gameArea.innerHTML = '';
-        document.getElementById("message").innerText = "Doğru yolu seç"; // Güncellendi
-        document.getElementById("message").style.color = "#555";
-        
         addNewGroup(); 
     }
 
     function addNewGroup() {
+        // Yeni soru oluşturulduğunda mesaj kısmını sıfırlar
+        document.getElementById("message").innerText = "Doğru yolu seç";
+        document.getElementById("message").style.color = "#555";
+        
         let multiplier = 1;
         if (isMistakeMode) {
             if (mistakeQueue.length === 0) return;
@@ -781,7 +780,6 @@
             }
             updateScore();
             
-            // Başarı mesajı güncellendi
             document.getElementById("message").innerText = "Doğru yolu seçtin 🏁";
             document.getElementById("message").style.color = "#27ae60";
 
@@ -975,7 +973,6 @@
         dragCar.style.transition = 'transform 0.3s ease';
         dragCar.style.transform = `translateY(-50%)`; 
         
-        // Yukarı veya aşağı yeterli sürükleme yapıldıysa
         if (dx > 30 || Math.abs(dy) > 30) {
             if (dy < -10 || (dx > 30 && dy <= 0)) {
                 document.querySelector('.path-top').click();
@@ -996,4 +993,3 @@
 </script>
 </body>
 </html>
-``` <FollowUp>
